@@ -18,3 +18,9 @@ MODEL_OPTIONS: dict[str, str] = {
     "YOLOv8 Medium (Accurate)": "yolov8m.pt",
 }
 
+
+@st.cache_resource(show_spinner="Loading detection model …")
+def load_model(model_path: str) -> YOLO:
+    """Download (if needed) and cache a YOLOv8 model in memory."""
+    return YOLO(model_path)
+
