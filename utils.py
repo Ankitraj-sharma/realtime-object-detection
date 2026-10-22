@@ -23,6 +23,29 @@ _PALETTE = [
 
 
 # ═══════════════════════════════════════════════════════════════════════
+#  Data-table helpers
+# ═══════════════════════════════════════════════════════════════════════
+def detections_to_dataframe(detections: list[dict]) -> pd.DataFrame:
+    """Convert a list of detection dicts into a tidy DataFrame."""
+    if not detections:
+        return pd.DataFrame(columns=["#", "Class", "Confidence (%)", "Bounding Box"])
+
+    rows = []
+    for i, d in enumerate(detections, 1):
+        x1, y1, x2, y2 = d["bbox"]
+        rows.append(
+            {
+                "#": i,
+                "Class": d["class_name"],
+                "Confidence (%)": f"{d['confidence'] * 100:.1f}",
+                "Bounding Box": f"({x1:.0f}, {y1:.0f}) → ({x2:.0f}, {y2:.0f})",
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+
+# ═══════════════════════════════════════════════════════════════════════
 #  Image / video helpers
 # ═══════════════════════════════════════════════════════════════════════
 def pil_to_cv2(pil_image: Image.Image) -> np.ndarray:
