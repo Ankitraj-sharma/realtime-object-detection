@@ -528,3 +528,94 @@ with tab_vid:
             unsafe_allow_html=True,
         )
 
+# ── TAB 3 : Webcam ───────────────────────────────────────────────────
+with tab_cam:
+    st.markdown("### Capture a snapshot from your webcam")
+    st.caption(
+        "Click the camera button to take a photo. Detection runs automatically on each capture."
+    )
+
+    camera_image = st.camera_input("📸 Take a photo", key="webcam_input")
+
+    if camera_image is not None:
+        pil_img = Image.open(camera_image).convert("RGB")
+        cv2_img = pil_to_cv2(pil_img)
+
+        with st.spinner("🔍 Detecting …"):
+            result = detector.detect(
+                cv2_img,
+                confidence=confidence,
+                iou_threshold=iou_threshold,
+                selected_classes=selected_classes,
+            )
+
+        st.session_state.total_images_processed += 1
+        st.session_state.detection_history.append(
+            {
+                "source": "webcam",
+                "detections": result["detections"],
+                "inference_ms": result["inference_ms"],
+                "timestamp": time.time(),
+            }
+        )
+
+        render_results(cv2_img, result, key_prefix="cam")
+
+# ── TAB 4 : Analytics ────────────────────────────────────────────────
+with tab_analytics:
+    st.markdown("### 📊 Aggregated Detection Analytics")
+    st.caption("Cumulative statistics from all detections in this session.")
+
+    history = st.session_state.detection_history
+    if not history:
+        st.info(
+            "No detections yet. Upload an image, video or use the webcam to get started!"
+        )
+    else:
+        # Merge all detections
+        all_dets = []
+        for h in history:
+            all_dets.extend(h["detections"])
+
+        m = summary_metrics(all_dets)
+
+        # KPI row
+        k1, k2, k3, k4, k5 = st.columns(5)
+        k1.metric("Total Objects", m["total"])
+        k2.metric("Unique Classes", m["unique_classes"])
+        k3.metric("Avg Confidence", f'{m["avg_confidence"]}%')
+        k4.metric("Max Confidence", f'{m["max_confidence"]}%')
+        k5.metric("Min Confidence", f'{m["min_confidence"]}%')
+
+        st.markdown("---")
+
+        # Charts
+        a1, a2 = st.columns(2)
+        with a1:
+            st.plotly_chart(
+                class_distribution_chart(all_dets),
+                use_container_width=True,
+                key="analytics_class",
+            )
+        with a2:
+            st.plotly_chart(
+                confidence_distribution_chart(all_dets),
+                use_container_width=True,
+                key="analytics_conf",
+            )
+
+        if len(set(d["class_name"] for d in all_dets)) > 1:
+            st.plotly_chart(
+                confidence_by_class_chart(all_dets),
+                use_container_width=True,
+                key="analytics_box",
+            )
+
+        # Full table
+        with st.expander("📋 All Detections (raw)"):
+            st.dataframe(
+                detections_to_dataframe(all_dets),
+                use_container_width=True,
+                hide_index=True,
+            )
+
