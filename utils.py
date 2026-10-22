@@ -75,6 +75,68 @@ def class_distribution_chart(detections: list[dict]) -> go.Figure:
     return fig
 
 
+def confidence_distribution_chart(detections: list[dict]) -> go.Figure:
+    """Histogram of confidence scores."""
+    confs = [d["confidence"] * 100 for d in detections]
+    fig = px.histogram(
+        x=confs,
+        nbins=20,
+        title="Confidence Score Distribution",
+        labels={"x": "Confidence (%)", "y": "Count"},
+        color_discrete_sequence=["#4ECDC4"],
+    )
+    fig.update_layout(
+        height=300,
+        margin=dict(l=0, r=0, t=40, b=0),
+        showlegend=False,
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+    )
+    return fig
+
+
+def confidence_by_class_chart(detections: list[dict]) -> go.Figure:
+    """Box-plot of confidence scores grouped by class."""
+    df = pd.DataFrame(detections)
+    df["confidence"] = df["confidence"] * 100
+    fig = px.box(
+        df,
+        x="class_name",
+        y="confidence",
+        color="class_name",
+        color_discrete_sequence=_PALETTE,
+        title="Confidence by Class",
+        labels={"class_name": "Class", "confidence": "Confidence (%)"},
+    )
+    fig.update_layout(
+        showlegend=False,
+        height=350,
+        margin=dict(l=0, r=0, t=40, b=0),
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+    )
+    return fig
+
+
+def summary_metrics(detections: list[dict]) -> dict:
+    """Compute aggregate metrics from detections."""
+    if not detections:
+        return {
+            "total": 0,
+            "unique_classes": 0,
+            "avg_confidence": 0.0,
+            "max_confidence": 0.0,
+            "min_confidence": 0.0,
+        }
+    confs = [d["confidence"] for d in detections]
+    return {
+        "total": len(detections),
+        "unique_classes": len(set(d["class_name"] for d in detections)),
+        "avg_confidence": round(sum(confs) / len(confs) * 100, 1),
+        "max_confidence": round(max(confs) * 100, 1),
+        "min_confidence": round(min(confs) * 100, 1),
+    }
+
 
 # ═══════════════════════════════════════════════════════════════════════
 #  Image / video helpers
