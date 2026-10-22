@@ -403,3 +403,128 @@ with tab_img:
             unsafe_allow_html=True,
         )
 
+# ── TAB 2 : Video Detection ──────────────────────────────────────────
+with tab_vid:
+    st.markdown("### Upload a video for frame-by-frame detection")
+
+    uploaded_video = st.file_uploader(
+        "Choose a video …",
+        type=["mp4", "avi", "mov", "mkv"],
+        key="vid_upload",
+        help="Supported: MP4, AVI, MOV, MKV  ·  Max 50 MB",
+    )
+
+    if uploaded_video is not None:
+        # Save uploaded video to a temp file (OpenCV needs a path)
+        tfile = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+        tfile.write(uploaded_video.read())
+        tfile.flush()
+
+        cap = cv2.VideoCapture(tfile.name)
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        fps = int(cap.get(cv2.CAP_PROP_FPS)) or 30
+
+        st.info(
+            f"📹 **{total_frames}** frames  ·  **{fps}** FPS  ·  processing every **{frame_skip}** frame(s)"
+        )
+
+        # UI containers
+        progress_bar = st.progress(0, text="Processing video …")
+        frame_display = st.empty()
+        stats_display = st.empty()
+
+        all_detections: list[dict] = []
+        frame_idx = 0
+        processed = 0
+
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            if frame_idx % frame_skip == 0:
+                result = detector.detect(
+                    frame,
+                    confidence=confidence,
+                    iou_threshold=iou_threshold,
+                    selected_classes=selected_classes,
+                )
+                all_detections.extend(result["detections"])
+                processed += 1
+
+                # Update display every few processed frames
+                if processed % 3 == 0 or frame_idx + frame_skip >= total_frames:
+                    frame_display.image(
+                        result["annotated_image"],
+                        channels="BGR",
+                        use_container_width=True,
+                        caption=f"Frame {frame_idx + 1}/{total_frames}",
+                    )
+
+                progress_pct = min((frame_idx + 1) / max(total_frames, 1), 1.0)
+                progress_bar.progress(
+                    progress_pct,
+                    text=f"Frame {frame_idx + 1}/{total_frames}  ·  {len(all_detections)} detections so far",
+                )
+
+            frame_idx += 1
+
+        cap.release()
+        progress_bar.progress(1.0, text="✅ Video processing complete!")
+
+        # Save to history
+        st.session_state.detection_history.append(
+            {
+                "source": "video",
+                "detections": all_detections,
+                "frames_processed": processed,
+                "timestamp": time.time(),
+            }
+        )
+
+        # Show video summary
+        st.markdown("---")
+        st.markdown("### 📊 Video Detection Summary")
+        vm = summary_metrics(all_detections)
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Total Detections", vm["total"])
+        c2.metric("Unique Classes", vm["unique_classes"])
+        c3.metric("Avg Confidence", f'{vm["avg_confidence"]}%')
+        c4.metric("Frames Processed", processed)
+
+        if all_detections:
+            v1, v2 = st.columns(2)
+            with v1:
+                st.plotly_chart(
+                    class_distribution_chart(all_detections),
+                    use_container_width=True,
+                    key="vid_class_dist",
+                )
+            with v2:
+                st.plotly_chart(
+                    confidence_distribution_chart(all_detections),
+                    use_container_width=True,
+                    key="vid_conf_dist",
+                )
+            with st.expander("📋 All Video Detections"):
+                st.dataframe(
+                    detections_to_dataframe(all_detections),
+                    use_container_width=True,
+                    hide_index=True,
+                )
+
+    else:
+        st.markdown(
+            """
+            <div class="upload-area">
+                <p style="font-size:3rem; margin:0;">🎥</p>
+                <p style="color:#888;">Drag & drop a video here or click <b>Browse files</b></p>
+                <p style="color:#555; font-size:0.85rem;">
+                    Each frame is processed through the detection model.
+                    Use the <b>frame skip</b> slider in the sidebar to speed up processing.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
