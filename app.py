@@ -153,3 +153,88 @@ st.markdown(
 # ═══════════════════════════════════════════════════════════════════════
 #  Sidebar — model & detection controls
 # ═══════════════════════════════════════════════════════════════════════
+with st.sidebar:
+    st.markdown("## ⚙️ Detection Settings")
+    st.markdown("---")
+
+    # Model selection
+    model_key = st.selectbox(
+        "🧠 Model",
+        options=list(MODEL_OPTIONS.keys()),
+        index=0,
+        help="Nano is fastest, Medium is most accurate.",
+    )
+
+    st.markdown("---")
+
+    # Thresholds
+    confidence = st.slider(
+        "🎯 Confidence Threshold",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.30,
+        step=0.05,
+        help="Minimum confidence to keep a detection.",
+    )
+
+    iou_threshold = st.slider(
+        "📐 IoU Threshold (NMS)",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.45,
+        step=0.05,
+        help="Overlap threshold for Non-Maximum Suppression.",
+    )
+
+    st.markdown("---")
+
+    # Class filtering — populated lazily after detector loads
+    st.markdown("### 🏷️ Class Filter")
+    filter_classes = st.checkbox("Filter specific classes", value=False)
+    selected_classes = None
+
+    if filter_classes:
+        # Instantiate detector briefly to list classes
+        _det = ObjectDetector(model_key)
+        all_classes = _det.get_all_class_names()
+        selected_classes = st.multiselect(
+            "Select classes to detect",
+            options=all_classes,
+            default=all_classes[:5],
+        )
+        if not selected_classes:
+            selected_classes = None  # detect all if nothing selected
+
+    st.markdown("---")
+
+    # Video processing options
+    st.markdown("### 🎬 Video Settings")
+    frame_skip = st.slider(
+        "Process every N-th frame",
+        min_value=1,
+        max_value=10,
+        value=3,
+        help="Skip frames to speed up video processing.",
+    )
+
+    st.markdown("---")
+
+    # Session stats
+    st.markdown("### 📈 Session Stats")
+    st.metric("Images Processed", st.session_state.total_images_processed)
+    st.metric(
+        "Total Detections",
+        sum(len(h["detections"]) for h in st.session_state.detection_history),
+    )
+
+    if st.button("🗑️ Clear History", use_container_width=True):
+        st.session_state.detection_history = []
+        st.session_state.total_images_processed = 0
+        st.rerun()
+
+
+# ═══════════════════════════════════════════════════════════════════════
+#  Load detector (cached)
+# ═══════════════════════════════════════════════════════════════════════
+detector = ObjectDetector(model_key)
+
