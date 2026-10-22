@@ -1,0 +1,29 @@
+# Byte-compiled / optimized
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# YOLOv8 model weights (auto-downloaded at runtime)
+*.pt
+
+# Ultralytics cache
+runs/
+
+# Streamlit secrets
+.streamlit/secrets.toml
