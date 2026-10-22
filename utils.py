@@ -44,6 +44,37 @@ def detections_to_dataframe(detections: list[dict]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+# ═══════════════════════════════════════════════════════════════════════
+#  Plotly charts
+# ═══════════════════════════════════════════════════════════════════════
+def class_distribution_chart(detections: list[dict]) -> go.Figure:
+    """Horizontal bar chart of detected class counts."""
+    counts = Counter(d["class_name"] for d in detections)
+    df = pd.DataFrame(counts.items(), columns=["Class", "Count"]).sort_values(
+        "Count", ascending=True
+    )
+    fig = px.bar(
+        df,
+        x="Count",
+        y="Class",
+        orientation="h",
+        color="Class",
+        color_discrete_sequence=_PALETTE,
+        title="Objects Detected by Class",
+    )
+    fig.update_layout(
+        showlegend=False,
+        height=max(250, len(df) * 40 + 100),
+        margin=dict(l=0, r=0, t=40, b=0),
+        xaxis_title="",
+        yaxis_title="",
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+    )
+    fig.update_xaxes(dtick=1)
+    return fig
+
+
 
 # ═══════════════════════════════════════════════════════════════════════
 #  Image / video helpers
