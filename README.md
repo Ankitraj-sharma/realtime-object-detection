@@ -128,3 +128,68 @@ realtime-object-detection/
 ## 🎛️ Configuration
 
 All parameters are configurable via the **sidebar** at runtime:
+
+| Parameter | Range | Default | Description |
+|-----------|-------|---------|-------------|
+| Model | Nano / Small / Medium | Nano | Detection model variant |
+| Confidence | 0.0 – 1.0 | 0.30 | Minimum detection confidence |
+| IoU Threshold | 0.0 – 1.0 | 0.45 | NMS overlap threshold |
+| Frame Skip | 1 – 10 | 3 | Process every N-th frame (video) |
+| Class Filter | Multi-select | All | Restrict to specific classes |
+
+---
+
+## 🌐 Deployment
+
+### Streamlit Cloud (Recommended)
+
+1. Push this repository to GitHub
+2. Go to [share.streamlit.io](https://share.streamlit.io/)
+3. Select the repository and set `app.py` as the main file
+4. Click **Deploy** — Streamlit Cloud handles everything automatically
+
+### Docker
+
+```dockerfile
+FROM python:3.11-slim
+WORKDIR /app
+RUN apt-get update && apt-get install -y libgl1 libglib2.0-0
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+EXPOSE 8501
+CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+```
+
+---
+
+## 🛠️ Tech Stack
+
+| Component | Technology | Version |
+|-----------|-----------|---------|
+| **Frontend** | [Streamlit](https://streamlit.io/) | ≥ 1.31 |
+| **Detection** | [YOLOv8 (Ultralytics)](https://docs.ultralytics.com/) | ≥ 8.1 |
+| **Computer Vision** | [OpenCV](https://opencv.org/) | ≥ 4.8 |
+| **Visualization** | [Plotly](https://plotly.com/) | ≥ 5.18 |
+| **Data** | [Pandas](https://pandas.pydata.org/) | ≥ 2.0 |
+| **Language** | Python | 3.10+ |
+
+---
+
+## 📜 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file.
+
+---
+
+## 🙏 Acknowledgements
+
+- [Ultralytics](https://docs.ultralytics.com/) for the YOLOv8 model family
+- [COCO Dataset](https://cocodataset.org/) for the training data and class definitions
+- [Streamlit](https://streamlit.io/) for the amazing web app framework
+
+---
+
+<div align="center">
+  <b>Built with ❤️ using Streamlit & YOLOv8</b>
+</div>
