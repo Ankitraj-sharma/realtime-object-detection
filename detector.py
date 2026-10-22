@@ -45,3 +45,71 @@ class ObjectDetector:
         self,
         image: np.ndarray,
         confidence: float = 0.25,
+        iou_threshold: float = 0.45,
+        selected_classes: Optional[list[str]] = None,
+    ) -> dict:
+        """
+        Run detection on a single image.
+
+        Parameters
+        ----------
+        image : np.ndarray
+            BGR or RGB image array.
+        confidence : float
+            Minimum confidence threshold (0 – 1).
+        iou_threshold : float
+            IoU threshold for Non-Maximum Suppression.
+        selected_classes : list[str] | None
+            If provided, only detect these class names.
+
+        Returns
+        -------
+        dict with keys:
+            annotated_image – RGB image with drawn boxes/labels
+            detections      – list of per-box dicts
+            count           – total number of detections
+            inference_ms    – model inference time in milliseconds
+        """
+
+        # Map selected class names → model indices
+        class_indices = None
+        if selected_classes:
+            class_indices = [
+                idx
+                for idx, name in self.class_names.items()
+                if name in selected_classes
+            ]
+            if not class_indices:
+                class_indices = None
+
+        results = self.model.predict(
+            source=image,
+            conf=confidence,
+            iou=iou_threshold,
+            classes=class_indices,
+            verbose=False,
+        )
+
+        result = results[0]
+
+        # Parse individual detections
+        detections: list[dict] = []
+        for box in result.boxes:
+            cls_id = int(box.cls[0])
+            detections.append(
+                {
+                    "class_id": cls_id,
+                    "class_name": self.class_names[cls_id],
+                    "confidence": round(float(box.conf[0]), 4),
+                    "bbox": [round(c, 1) for c in box.xyxy[0].cpu().numpy().tolist()],
+                }
+            )
+
+        # Annotated image (RGB)
+        annotated_image = result.plot()
+
+        return {
+            "annotated_image": annotated_image,
+            "detections": detections,
+            "count": len(detections),
+            "inference_ms": round(result.speed.get("inference", 0), 1),
