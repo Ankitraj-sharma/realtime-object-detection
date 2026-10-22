@@ -238,3 +238,109 @@ with st.sidebar:
 # ═══════════════════════════════════════════════════════════════════════
 detector = ObjectDetector(model_key)
 
+
+# ═══════════════════════════════════════════════════════════════════════
+#  Helper: render detection results
+# ═══════════════════════════════════════════════════════════════════════
+def render_results(
+    original: np.ndarray,
+    result: dict,
+    *,
+    show_side_by_side: bool = True,
+    key_prefix: str = "img",
+) -> None:
+    """Display annotated image, metrics, table and download button."""
+    detections = result["detections"]
+    metrics = summary_metrics(detections)
+
+    # ── KPI row ────────────────────────────────────────────────────
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.markdown(
+            f'<div class="metric-card"><div class="metric-value">{metrics["total"]}</div>'
+            f'<div class="metric-label">Objects Detected</div></div>',
+            unsafe_allow_html=True,
+        )
+    with c2:
+        st.markdown(
+            f'<div class="metric-card"><div class="metric-value">{metrics["unique_classes"]}</div>'
+            f'<div class="metric-label">Unique Classes</div></div>',
+            unsafe_allow_html=True,
+        )
+    with c3:
+        st.markdown(
+            f'<div class="metric-card"><div class="metric-value">{metrics["avg_confidence"]}%</div>'
+            f'<div class="metric-label">Avg Confidence</div></div>',
+            unsafe_allow_html=True,
+        )
+    with c4:
+        st.markdown(
+            f'<div class="metric-card"><div class="metric-value">{result["inference_ms"]} ms</div>'
+            f'<div class="metric-label">Inference Time</div></div>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("")
+
+    # ── Images ─────────────────────────────────────────────────────
+    if show_side_by_side:
+        col_orig, col_det = st.columns(2)
+        with col_orig:
+            st.markdown("#### 📷 Original")
+            st.image(original, channels="BGR", use_container_width=True)
+        with col_det:
+            st.markdown("#### 🎯 Detected")
+            st.image(
+                result["annotated_image"],
+                channels="BGR",
+                use_container_width=True,
+            )
+    else:
+        st.image(
+            result["annotated_image"],
+            channels="BGR",
+            use_container_width=True,
+            caption="Detection Result",
+        )
+
+    # ── Download button ────────────────────────────────────────────
+    annotated_rgb = cv2.cvtColor(result["annotated_image"], cv2.COLOR_BGR2RGB)
+    st.download_button(
+        label="⬇️ Download Annotated Image",
+        data=image_to_bytes(annotated_rgb, "PNG"),
+        file_name=f"visionai_detection_{int(time.time())}.png",
+        mime="image/png",
+        key=f"{key_prefix}_download",
+        use_container_width=True,
+    )
+
+    # ── Detections table ───────────────────────────────────────────
+    if detections:
+        with st.expander("📋 Detection Details", expanded=True):
+            st.dataframe(
+                detections_to_dataframe(detections),
+                use_container_width=True,
+                hide_index=True,
+            )
+
+        # ── Inline charts ──────────────────────────────────────────
+        ch1, ch2 = st.columns(2)
+        with ch1:
+            st.plotly_chart(
+                class_distribution_chart(detections),
+                use_container_width=True,
+                key=f"{key_prefix}_class_dist",
+            )
+        with ch2:
+            st.plotly_chart(
+                confidence_distribution_chart(detections),
+                use_container_width=True,
+                key=f"{key_prefix}_conf_dist",
+            )
+    else:
+        st.info("No objects detected. Try lowering the confidence threshold.")
+
+
+# ═══════════════════════════════════════════════════════════════════════
+#  Tabs
+# ═══════════════════════════════════════════════════════════════════════
