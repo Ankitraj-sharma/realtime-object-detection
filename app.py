@@ -128,3 +128,28 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# ═══════════════════════════════════════════════════════════════════════
+#  Session state initialisation
+# ═══════════════════════════════════════════════════════════════════════
+if "detection_history" not in st.session_state:
+    st.session_state.detection_history = []
+if "total_images_processed" not in st.session_state:
+    st.session_state.total_images_processed = 0
+
+# ═══════════════════════════════════════════════════════════════════════
+#  Header
+# ═══════════════════════════════════════════════════════════════════════
+st.markdown(
+    """
+    <div class="main-header">
+        <h1>🔍 VisionAI — Real-Time Object Detection</h1>
+        <p>Detect, analyse and visualise objects in images, videos and live webcam
+        feeds powered by state-of-the-art YOLOv8 deep learning models.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ═══════════════════════════════════════════════════════════════════════
+#  Sidebar — model & detection controls
+# ═══════════════════════════════════════════════════════════════════════
