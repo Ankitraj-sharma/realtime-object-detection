@@ -58,3 +58,73 @@ A **production-grade** web application for real-time object detection powered by
 ### Prerequisites
 
 - Python 3.10 or higher
+- pip package manager
+
+### Installation
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/<your-username>/realtime-object-detection.git
+cd realtime-object-detection
+
+# 2. Create a virtual environment (recommended)
+python -m venv venv
+source venv/bin/activate        # Linux/macOS
+# venv\Scripts\activate         # Windows
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Run the app
+streamlit run app.py
+```
+
+The app will open automatically at `http://localhost:8501`.
+
+---
+
+## 🧠 Model Details
+
+This application uses **YOLOv8** (You Only Look Once, version 8) by [Ultralytics](https://docs.ultralytics.com/) — a state-of-the-art, real-time object detection model.
+
+| Model | Parameters | mAP@50 (COCO) | CPU Inference | Use Case |
+|-------|-----------|----------------|---------------|----------|
+| **YOLOv8n** (Nano) | 3.2M | 37.3% | ~80 ms | Real-time, resource-constrained |
+| **YOLOv8s** (Small) | 11.2M | 44.9% | ~130 ms | Balanced speed/accuracy |
+| **YOLOv8m** (Medium) | 25.9M | 50.2% | ~230 ms | Higher accuracy |
+
+### Detectable Classes (COCO)
+
+The model detects **80 object classes** across categories:
+
+- 🧑 **People** — person
+- 🚗 **Vehicles** — car, truck, bus, bicycle, motorcycle, airplane, boat, train
+- 🐾 **Animals** — cat, dog, horse, bird, cow, sheep, elephant, bear, zebra, giraffe
+- 🍕 **Food** — banana, apple, sandwich, orange, pizza, cake, donut
+- 🪑 **Furniture** — chair, couch, bed, dining table
+- 📱 **Electronics** — laptop, TV, cell phone, keyboard, mouse
+- ⚽ **Sports** — sports ball, tennis racket, baseball bat, skateboard
+
+---
+
+## 📂 Project Structure
+
+```
+realtime-object-detection/
+├── app.py                  # Main Streamlit application (UI + routing)
+├── detector.py             # YOLOv8 detection engine (model loading + inference)
+├── utils.py                # Visualization helpers, charts, data conversion
+├── requirements.txt        # Python dependencies
+├── packages.txt            # System dependencies (for Streamlit Cloud)
+├── .streamlit/
+│   └── config.toml         # Streamlit theme & server configuration
+├── .gitignore
+├── LICENSE                 # MIT License
+└── README.md               # This file
+```
+
+---
+
+## 🎛️ Configuration
+
+All parameters are configurable via the **sidebar** at runtime:
