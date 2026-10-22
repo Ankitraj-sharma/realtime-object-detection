@@ -619,3 +619,100 @@ with tab_analytics:
                 hide_index=True,
             )
 
+# ── TAB 5 : About ────────────────────────────────────────────────────
+with tab_about:
+    st.markdown(
+        """
+        ### About VisionAI
+
+        **VisionAI** is a real-time object detection web application built for 
+        analysing images, videos and live webcam feeds. It leverages 
+        **YOLOv8** — the latest generation of the YOLO (You Only Look Once) 
+        family of models — which achieve an excellent balance between speed 
+        and accuracy.
+
+        ---
+
+        #### 🏗️ Architecture
+
+        ```
+        ┌──────────────┐     ┌──────────────┐     ┌──────────────────┐
+        │  Streamlit    │────▶│  Detector    │────▶│  YOLOv8 Model    │
+        │  Frontend     │◀────│  Engine      │◀────│  (Ultralytics)   │
+        └──────────────┘     └──────────────┘     └──────────────────┘
+              │                                           │
+              ▼                                           ▼
+        ┌──────────────┐                          ┌──────────────────┐
+        │  Plotly       │                          │  COCO Dataset    │
+        │  Analytics    │                          │  (80 classes)    │
+        └──────────────┘                          └──────────────────┘
+        ```
+
+        ---
+
+        #### 🧠 Model Details
+
+        | Model | Parameters | mAP@50 | Speed (CPU) |
+        |-------|-----------|--------|-------------|
+        | YOLOv8n (Nano) | 3.2M | 37.3 | ~80 ms |
+        | YOLOv8s (Small) | 11.2M | 44.9 | ~130 ms |
+        | YOLOv8m (Medium) | 25.9M | 50.2 | ~230 ms |
+
+        ---
+
+        #### 🎯 Detectable Object Classes (COCO)
+
+        The model can detect **80 object classes** including:
+
+        🚗 **Vehicles** — car, truck, bus, bicycle, motorcycle, airplane, boat, train  
+        🧑 **People** — person  
+        🐾 **Animals** — cat, dog, horse, bird, cow, sheep, elephant, bear, zebra, giraffe  
+        🍕 **Food** — banana, apple, sandwich, orange, pizza, cake, donut, hot dog  
+        🪑 **Furniture** — chair, couch, bed, dining table, toilet  
+        📱 **Electronics** — laptop, TV, cell phone, keyboard, mouse, remote  
+        ⚽ **Sports** — sports ball, tennis racket, baseball bat, skateboard, surfboard, ski  
+
+        ---
+
+        #### 🛠️ Tech Stack
+
+        | Component | Technology |
+        |-----------|-----------|
+        | Frontend | Streamlit |
+        | Detection Model | YOLOv8 (Ultralytics) |
+        | Computer Vision | OpenCV |
+        | Analytics | Plotly · Pandas |
+        | Deployment | Streamlit Cloud |
+        | Language | Python 3.10+ |
+
+        ---
+
+        #### 📚 References
+
+        - [Ultralytics YOLOv8](https://docs.ultralytics.com/)
+        - [COCO Dataset](https://cocodataset.org/)
+        - [Streamlit Documentation](https://docs.streamlit.io/)
+
+        ---
+
+        <div style="text-align:center; color:#666; padding:1rem;">
+            Built with ❤️ using Streamlit & YOLOv8
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+# ═══════════════════════════════════════════════════════════════════════
+#  Footer
+# ═══════════════════════════════════════════════════════════════════════
+st.markdown(
+    """
+    <div class="footer">
+        <b>VisionAI</b> · Real-Time Object Detection · 
+        Powered by <a href="https://docs.ultralytics.com/" target="_blank">YOLOv8</a> & 
+        <a href="https://streamlit.io/" target="_blank">Streamlit</a> ·
+        © 2026
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
