@@ -344,3 +344,62 @@ def render_results(
 # ═══════════════════════════════════════════════════════════════════════
 #  Tabs
 # ═══════════════════════════════════════════════════════════════════════
+tab_img, tab_vid, tab_cam, tab_analytics, tab_about = st.tabs(
+    ["📷 Image Detection", "🎥 Video Detection", "📹 Webcam", "📊 Analytics", "ℹ️ About"]
+)
+
+# ── TAB 1 : Image Detection ──────────────────────────────────────────
+with tab_img:
+    st.markdown("### Upload an image to detect objects")
+
+    uploaded_file = st.file_uploader(
+        "Choose an image …",
+        type=["jpg", "jpeg", "png", "bmp", "webp"],
+        key="img_upload",
+        help="Supported: JPG, PNG, BMP, WebP  ·  Max 50 MB",
+    )
+
+    if uploaded_file is not None:
+        # Read image
+        pil_img = Image.open(uploaded_file).convert("RGB")
+        cv2_img = pil_to_cv2(pil_img)
+
+        # Run detection
+        with st.spinner("🔍 Running object detection …"):
+            start = time.perf_counter()
+            result = detector.detect(
+                cv2_img,
+                confidence=confidence,
+                iou_threshold=iou_threshold,
+                selected_classes=selected_classes,
+            )
+            wall_time = round((time.perf_counter() - start) * 1000, 1)
+
+        # Record in session history
+        st.session_state.total_images_processed += 1
+        st.session_state.detection_history.append(
+            {
+                "source": "image",
+                "detections": result["detections"],
+                "inference_ms": result["inference_ms"],
+                "timestamp": time.time(),
+            }
+        )
+
+        render_results(cv2_img, result, key_prefix="img")
+
+    else:
+        st.markdown(
+            """
+            <div class="upload-area">
+                <p style="font-size:3rem; margin:0;">📷</p>
+                <p style="color:#888;">Drag & drop an image here or click <b>Browse files</b></p>
+                <p style="color:#555; font-size:0.85rem;">
+                    The model can detect <b>80 object classes</b> from the COCO dataset —
+                    people, vehicles, animals, furniture, food and more.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
