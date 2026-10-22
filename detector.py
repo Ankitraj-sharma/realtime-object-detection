@@ -113,3 +113,9 @@ class ObjectDetector:
             "detections": detections,
             "count": len(detections),
             "inference_ms": round(result.speed.get("inference", 0), 1),
+        }
+
+    # ── Helpers ────────────────────────────────────────────────────────
+    def get_all_class_names(self) -> list[str]:
+        """Return sorted list of all COCO class names the model recognizes."""
+        return sorted(self.class_names.values())
