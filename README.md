@@ -15,9 +15,10 @@ A **production-grade** web application for real-time object detection powered by
 
 | Feature | Description |
 |---------|-------------|
+| 🔴 **Live Webcam Stream** | **Zero upload needed!** Just click START — continuous real-time detection via WebRTC |
 | 📷 **Image Detection** | Upload any image and instantly detect 80+ object classes |
 | 🎥 **Video Processing** | Frame-by-frame detection on uploaded videos with progress tracking |
-| 📹 **Webcam Capture** | Snap photos from your webcam for instant detection |
+| 📸 **Camera Snapshot** | Snap single photos from webcam for detailed offline analysis |
 | 📊 **Interactive Analytics** | Plotly-powered charts — class distribution, confidence histograms, box plots |
 | 🧠 **Multi-Model Support** | Switch between YOLOv8 Nano (fast), Small (balanced), and Medium (accurate) |
 | 🎯 **Configurable Thresholds** | Fine-tune confidence and IoU thresholds via sidebar controls |
@@ -113,6 +114,7 @@ The model detects **80 object classes** across categories:
 realtime-object-detection/
 ├── app.py                  # Main Streamlit application (UI + routing)
 ├── detector.py             # YOLOv8 detection engine (model loading + inference)
+├── live_stream.py          # Real-time WebRTC continuous video streaming engine
 ├── utils.py                # Visualization helpers, charts, data conversion
 ├── requirements.txt        # Python dependencies
 ├── packages.txt            # System dependencies (for Streamlit Cloud)
