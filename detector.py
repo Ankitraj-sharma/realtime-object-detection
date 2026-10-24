@@ -115,6 +115,42 @@ class ObjectDetector:
             "inference_ms": round(result.speed.get("inference", 0), 1),
         }
 
+    def predict_frame(
+        self,
+        frame: np.ndarray,
+        confidence: float = 0.25,
+        iou_threshold: float = 0.45,
+        selected_classes: Optional[list[str]] = None,
+    ) -> tuple[np.ndarray, list[str]]:
+        """
+        Optimized single-frame inference for continuous live WebRTC streaming.
+
+        Returns
+        -------
+        tuple[np.ndarray, list[str]]:
+            Annotated BGR frame and list of detected class names.
+        """
+        class_indices = None
+        if selected_classes:
+            class_indices = [
+                idx
+                for idx, name in self.class_names.items()
+                if name in selected_classes
+            ]
+            if not class_indices:
+                class_indices = None
+
+        results = self.model.predict(
+            source=frame,
+            conf=confidence,
+            iou=iou_threshold,
+            classes=class_indices,
+            verbose=False,
+        )
+        res = results[0]
+        detected_names = [self.class_names[int(box.cls[0])] for box in res.boxes]
+        return res.plot(), detected_names
+
     # ── Helpers ────────────────────────────────────────────────────────
     def get_all_class_names(self) -> list[str]:
         """Return sorted list of all COCO class names the model recognizes."""
