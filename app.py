@@ -19,6 +19,8 @@ import streamlit as st
 from PIL import Image
 
 from detector import MODEL_OPTIONS, ObjectDetector
+from live_stream import RTC_CONFIGURATION, LiveVideoProcessor
+from streamlit_webrtc import WebRtcMode, webrtc_streamer
 from utils import (
     class_distribution_chart,
     confidence_by_class_chart,
@@ -344,11 +346,71 @@ def render_results(
 # ═══════════════════════════════════════════════════════════════════════
 #  Tabs
 # ═══════════════════════════════════════════════════════════════════════
-tab_img, tab_vid, tab_cam, tab_analytics, tab_about = st.tabs(
-    ["📷 Image Detection", "🎥 Video Detection", "📹 Webcam", "📊 Analytics", "ℹ️ About"]
+tab_live, tab_img, tab_vid, tab_cam, tab_analytics, tab_about = st.tabs(
+    [
+        "🔴 Live Webcam Stream",
+        "📷 Image Detection",
+        "🎥 Video Detection",
+        "📸 Camera Snapshot",
+        "📊 Analytics",
+        "ℹ️ About",
+    ]
 )
 
-# ── TAB 1 : Image Detection ──────────────────────────────────────────
+# ── TAB 1 : Live Webcam Continuous Stream (No Upload Needed!) ────────
+with tab_live:
+    st.markdown("### 🔴 Real-Time Continuous Webcam Detection")
+    st.markdown(
+        """
+        <div style="background: rgba(78, 205, 196, 0.1); border-left: 4px solid #4ECDC4; padding: 12px 18px; border-radius: 8px; margin-bottom: 20px;">
+            <b style="color: #4ECDC4; font-size: 1.05rem;">✨ No File Upload Needed!</b><br>
+            Click <b>START</b> below to open your camera. The model detects objects automatically in real-time continuous video!
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    ctx = webrtc_streamer(
+        key="visionai-live-stream",
+        mode=WebRtcMode.SENDRECV,
+        rtc_configuration=RTC_CONFIGURATION,
+        video_processor_factory=LiveVideoProcessor,
+        media_stream_constraints={"video": True, "audio": False},
+        async_processing=True,
+    )
+
+    if ctx.video_processor:
+        ctx.video_processor.update_params(
+            detector=detector,
+            confidence=confidence,
+            iou_threshold=iou_threshold,
+            selected_classes=selected_classes,
+        )
+
+    # Real-time telemetry indicators
+    st.markdown("#### ⚡ Live Stream Diagnostics")
+    c1, c2, c3 = st.columns(3)
+    if ctx.state.playing and ctx.video_processor:
+        stats = ctx.video_processor.get_stats()
+        with c1:
+            st.metric("⚡ Stream Throughput", f"{stats['fps']} FPS")
+        with c2:
+            st.metric("🎯 Objects Detected", stats["count"])
+        with c3:
+            detected_str = ", ".join(sorted(set(stats["classes"]))) if stats["classes"] else "None"
+            st.metric("🏷️ Current Classes", detected_str)
+    else:
+        with c1:
+            st.metric("⚡ Stream Status", "Inactive (Click START)")
+        with c2:
+            st.metric("🎯 Objects Detected", "—")
+        with c3:
+            st.metric("🏷️ Current Classes", "—")
+
+    st.markdown("---")
+    st.caption("💡 *Tip: You can tune confidence threshold and select classes dynamically from the sidebar while streaming.*")
+
+# ── TAB 2 : Image Detection ──────────────────────────────────────────
 with tab_img:
     st.markdown("### Upload an image to detect objects")
 
@@ -403,7 +465,7 @@ with tab_img:
             unsafe_allow_html=True,
         )
 
-# ── TAB 2 : Video Detection ──────────────────────────────────────────
+# ── TAB 3 : Video Detection ──────────────────────────────────────────
 with tab_vid:
     st.markdown("### Upload a video for frame-by-frame detection")
 
@@ -528,11 +590,11 @@ with tab_vid:
             unsafe_allow_html=True,
         )
 
-# ── TAB 3 : Webcam ───────────────────────────────────────────────────
+# ── TAB 4 : Camera Snapshot Mode ─────────────────────────────────────
 with tab_cam:
-    st.markdown("### Capture a snapshot from your webcam")
+    st.markdown("### 📸 Capture a Still Photo")
     st.caption(
-        "Click the camera button to take a photo. Detection runs automatically on each capture."
+        "Prefer still snapshots instead of continuous stream? Take a photo here for detailed analysis and download."
     )
 
     camera_image = st.camera_input("📸 Take a photo", key="webcam_input")
@@ -561,7 +623,7 @@ with tab_cam:
 
         render_results(cv2_img, result, key_prefix="cam")
 
-# ── TAB 4 : Analytics ────────────────────────────────────────────────
+# ── TAB 5 : Analytics ────────────────────────────────────────────────
 with tab_analytics:
     st.markdown("### 📊 Aggregated Detection Analytics")
     st.caption("Cumulative statistics from all detections in this session.")
@@ -619,22 +681,45 @@ with tab_analytics:
                 hide_index=True,
             )
 
-# ── TAB 5 : About ────────────────────────────────────────────────────
+# ── TAB 6 : About ────────────────────────────────────────────────────
 with tab_about:
     st.markdown(
         """
         ### About VisionAI
 
-        **VisionAI** is a real-time object detection web application built for 
-        analysing images, videos and live webcam feeds. It leverages 
-        **YOLOv8** — the latest generation of the YOLO (You Only Look Once) 
-        family of models — which achieve an excellent balance between speed 
-        and accuracy.
+        **VisionAI** is a production-grade, real-time object detection web application
+        supporting **continuous live webcam streaming (WebRTC)**, image analysis, and video processing.
+        It leverages **YOLOv8** (You Only Look Once v8) deep learning models for high accuracy and ultra-low latency.
 
         ---
 
         #### 🏗️ Architecture
 
+        ```
+        ┌────────────────────────────────────────────────────────┐
+        │                 Browser (Client Side)                  │
+        │    Live Webcam Stream (WebRTC) · MediaStream API       │
+        └──────────────────────────┬─────────────────────────────┘
+                                   │  P2P video frame feed
+                                   ▼
+        ┌────────────────────────────────────────────────────────┐
+        │            Streamlit-WebRTC VideoProcessor             │
+        │      recv(av.VideoFrame) ──▶ bgr24 ndarray             │
+        └──────────────────────────┬─────────────────────────────┘
+                                   │
+                                   ▼
+        ┌────────────────────────────────────────────────────────┐
+        │            Object Detector Engine (YOLOv8)             │
+        │  • Ultralytics PyTorch Model (Nano / Small / Medium)   │
+        │  • Non-Maximum Suppression (NMS) · Confidence Filter   │
+        │  • COCO 80-Class Detection & Bounding Box Plotting     │
+        └──────────────────────────┬─────────────────────────────┘
+                                   │
+                                   ▼
+        ┌────────────────────────────────────────────────────────┐
+        │            Live Annotated Stream Display               │
+        │        Real-time telemetry, FPS & Object metrics       │
+        └────────────────────────────────────────────────────────┘
         ```
         ┌──────────────┐     ┌──────────────┐     ┌──────────────────┐
         │  Streamlit    │────▶│  Detector    │────▶│  YOLOv8 Model    │
